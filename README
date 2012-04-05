@@ -1,1 +1,3 @@
 == Redis logger client for python
+
+`sudo easy_install python-redis-logger`
