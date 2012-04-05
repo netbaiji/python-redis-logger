@@ -1,6 +1,7 @@
-#!/usr/bin/env python
-
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 setup(
     name='redis-logger',
@@ -8,4 +9,6 @@ setup(
     description='Persistent redis logger for python',
     author='Teodor Pripoae',
     author_email='toni@netbaiji.com',
-    packages=['redis-logger'])
+    url='https://github.com/teodor-pripoae/python-redis-logger',
+    install_requires=['redis'],
+    packages=['redis_logger'])
