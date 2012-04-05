@@ -4,7 +4,7 @@ except ImportError:
     from distutils.core import setup
 
 setup(
-    name='redis_logger',
+    name='python-redis-logger',
     version='0.1',
     description='Persistent redis logger for python',
     author='Teodor Pripoae',
