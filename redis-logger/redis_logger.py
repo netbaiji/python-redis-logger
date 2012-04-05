@@ -1,5 +1,6 @@
 import redis
 import json
+import datetime
 
 
 class RedisLogger():
@@ -10,7 +11,8 @@ class RedisLogger():
     def log(self, log_type, filename, message):
         _log = {
             'filename': filename,
-            'message': message
+            'message': message,
+            'pubdate': str(datetime.datetime.now())
         }
 
         self.client.lpush(
@@ -38,7 +40,8 @@ class RedisLogger():
         channel = "%s__%s" % (self.channel, log_type)
 
         size = self.client.llen(channel)
-        first, last = size - range_to, size - range_from
+        #first, last = size - range_to, size - range_from
+        first, last = range_from - 1, range_to - 1
 
         print first, last
 
@@ -47,13 +50,29 @@ class RedisLogger():
     def get_last_errors(self, range_from, range_to):
         return self.get("error", range_from, range_to)
 
+    def get_last_fatals(self, range_from, range_to):
+        return self.get("fatals", range_from, range_to)
+
+    def get_last_warnings(self, range_from, range_to):
+        return self.get("warning", range_from, range_to)
+
+    def get_last_debugs(self, range_from, range_to):
+        return self.get("debug", range_from, range_to)
+
+    def get_last_infos(self, range_from, range_to):
+        return self.get("info", range_from, range_to)
+
 """
 if __name__ == "__main__":
     logger = RedisLogger()
 
-    logger.error("redis_logger.py", "Test message")
+    logger.error("redis_logger.py", "6a6269091d3")
 
     # get last 3 errors
 
     print logger.get_last_errors(1, 3)
+    print logger.get_last_fatals(1, 100)
+    print logger.get_last_warnings(1, 100)
+    print logger.get_last_debugs(1, 100)
+    print logger.get_last_infos(1, 100)
 """
