@@ -46,8 +46,6 @@ class RedisLogger():
         #first, last = size - range_to, size - range_from
         first, last = range_from - 1, range_to - 1
 
-        print first, last
-
         return self.client.lrange(channel, first, last)
 
     def get_last_errors(self, range_from, range_to):
@@ -65,11 +63,11 @@ class RedisLogger():
     def get_last_infos(self, range_from, range_to):
         return self.get("info", range_from, range_to)
 
-"""
+
 if __name__ == "__main__":
     logger = RedisLogger()
 
-    logger.error("redis_logger.py", "6a6269091d3")
+    #logger.error("redis_logger.py", "6a6269091d3")
 
     # get last 3 errors
 
@@ -78,4 +76,3 @@ if __name__ == "__main__":
     print logger.get_last_warnings(1, 100)
     print logger.get_last_debugs(1, 100)
     print logger.get_last_infos(1, 100)
-"""

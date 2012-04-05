@@ -5,7 +5,7 @@ except ImportError:
 
 setup(
     name='python-redis-logger',
-    version='0.1',
+    version='0.1.1',
     description='Persistent redis logger for python',
     author='Teodor Pripoae',
     author_email='toni@netbaiji.com',
