@@ -20,6 +20,9 @@ class RedisLogger():
             json.dumps(_log)
         )
 
+    def set_channel(self, channel):
+        self.channel = channel
+
     def error(self, filename, message):
         self.log("error", filename, message)
 
