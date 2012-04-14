@@ -2,3 +2,4 @@
 build
 dist
 redis_logger.egg-info
+python_redis_logger.egg-info/

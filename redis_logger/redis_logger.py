@@ -1,6 +1,13 @@
 import redis
 import json
 import datetime
+import inspect
+
+# Get file and line_no where logger was called
+# First three entries are from this library, skip them
+def get_traceback():
+    frame, filename, line_no = inspect.stack()[3][:3]
+    return "%s:%s" % (filename, line_no)
 
 
 class RedisLogger():
@@ -8,35 +15,57 @@ class RedisLogger():
         self.client = redis.StrictRedis(host=host, port=port)
         self.channel = channel
 
-    def log(self, log_type, filename, message):
+    def log(self, log_type, message, filename=None):
         _log = {
-            'filename': filename,
+            'filename': filename or get_traceback(),
             'message': message,
-            'pubdate': str(datetime.datetime.now())
+            'pubdate': str(datetime.datetime.now()),
         }
 
-        self.client.lpush(
-            "%s__%s" % (self.channel, log_type),
-            json.dumps(_log)
-        )
+        # Send log to Redis
+        try:
+            self.client.lpush(
+                "%s__%s" % (self.channel, log_type),
+                json.dumps(_log)
+            )
+        except redis.exceptions.ConnectionError:
+            pass
 
+        # If Pusher client is attached also log into it
+        if hasattr(self, "pusher_client") \
+          and getattr(self, "pusher_client") is not None:
+            _log["type"] = log_type
+            _log["channel"] = self.channel
+
+            self.pusher_client["logs"].trigger(
+                "log_entry_created",
+                {'entry': json.dumps(_log)}
+            )
+
+    # Sets channel (if you want to change redis channel,
+    #   but you don't want to reset connection)
     def set_channel(self, channel):
         self.channel = channel
 
-    def error(self, filename, message):
-        self.log("error", filename, message)
+    # Attach pusher client, if you want to push notifications about
+    #   logs on pusher.com (realtime logging)
+    def attach_pusher_client(self, pusher_client):
+        self.pusher_client = pusher_client
 
-    def fatal(self, filename, message):
-        self.log("fatal", filename, message)
+    def error(self, message, filename=None):
+        self.log("error", message, filename)
 
-    def warning(self, filename, message):
-        self.log("warning", filename, message)
+    def fatal(self, message, filename=None):
+        self.log("fatal", message, filename)
 
-    def debug(self, filename, message):
-        self.log("debug", filename, message)
+    def warning(self, message, filename=None):
+        self.log("warning", message, filename)
 
-    def info(self, filename, message):
-        self.log("info", filename, message)
+    def debug(self, message, filename=None):
+        self.log("debug", message, filename)
+
+    def info(self, message, filename=None):
+        self.log("info", message, filename)
 
     # Getting logs
     def get(self, log_type, range_from, range_to):
@@ -52,7 +81,7 @@ class RedisLogger():
         return self.get("error", range_from, range_to)
 
     def get_last_fatals(self, range_from, range_to):
-        return self.get("fatals", range_from, range_to)
+        return self.get("fatal", range_from, range_to)
 
     def get_last_warnings(self, range_from, range_to):
         return self.get("warning", range_from, range_to)
@@ -65,14 +94,14 @@ class RedisLogger():
 
 
 if __name__ == "__main__":
-    logger = RedisLogger()
+    logger = RedisLogger(channel="development")
 
-    #logger.error("redis_logger.py", "6a6269091d3")
+    # create pusher client
+    import pusher
+    p = pusher.Pusher(
+        app_id = 'your-app-id',
+        key = 'your-key',
+        secret = 'your-secret-key'
+    )
 
-    # get last 3 errors
-
-    print logger.get_last_errors(1, 3)
-    print logger.get_last_fatals(1, 100)
-    print logger.get_last_warnings(1, 100)
-    print logger.get_last_debugs(1, 100)
-    print logger.get_last_infos(1, 100)
+    logger.attach_pusher_client(p)
